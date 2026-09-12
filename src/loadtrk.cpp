@@ -360,6 +360,11 @@ int main(int argc, char **argv)
   if (std::strlen(songfilename))
   {
       SngType type = loadsong();
+      if (type == SngType::NONE)
+      {
+          printtextc(MAX_ROWS/2-1, colors.cmessage(), "Failed loading song!");
+          waitkeynoupdate();
+      }
       switchMode((type == SngType::DUAL) ? 2 : 1);
   }
 
@@ -1269,6 +1274,12 @@ void load()
         stopsong();
         resetmasterfader();
         SngType type = loadsong();
+        if (type == SngType::NONE)
+        {
+            printtextcp(dpos.statusBottomX+29, dpos.statusBottomY, colors.cmessage(), "Failed loading song!");
+            waitkey();
+            printblank(dpos.statusBottomX, dpos.statusBottomY, 58);
+        }
         switchMode((type == SngType::DUAL) ? 2 : 1);
       }
     }
