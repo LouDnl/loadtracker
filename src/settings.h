@@ -48,6 +48,7 @@ struct Settings
     unsigned customclockrate;
     unsigned combwaves;
     unsigned exsid;
+    unsigned usbsid;
     unsigned darkmode;
     float panning;
     float basepitch;

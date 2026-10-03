@@ -62,6 +62,7 @@ void Settings::validate()
   if (filterbias > 1.0) filterbias = 1.0;
   if (numsids < 1) numsids = 1;
   if (numsids > 2) numsids = 2;
+  if (usbsid > 1) usbsid = 1;
 }
 
 Settings::Settings() :
@@ -89,6 +90,7 @@ Settings::Settings() :
     customclockrate(0),
     combwaves(1),
     exsid(0),
+    usbsid(0),
     darkmode(0),
     panning(1.0f),
     basepitch(0.0f),

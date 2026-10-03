@@ -41,6 +41,11 @@
 #  include <exSID.h>
 #endif
 
+#ifdef USE_USBSID
+#  include "configfile.h"
+#  include "gusbsid.h"
+#endif
+
 #include <new>
 
 #include <cstdlib>
@@ -63,7 +68,17 @@ bool useexsid = false;
 SDL_TimerID tmr = 0;
 void* exsidfd = nullptr;
 unsigned exsidDelay = 0;
+#endif
 
+#ifdef USE_USBSID
+#define SIDWAVEDELAY 4 // and $xxxx,x 4 cycles extra
+
+bool useusbsid = false;
+
+void sound_usbsidframe();
+#endif
+
+#if defined(USE_EXSID) || defined(USE_USBSID)
 extern unsigned char sidreg[NUMSIDREGS];
 extern unsigned char sidreg2[NUMSIDREGS];
 #endif
@@ -98,7 +113,27 @@ bool sound_init(bool writer, const Settings &cfg)
     snd_bpmtempo /= 2;
   }
 
-  if (cfg.exsid)
+  if (cfg.usbsid)
+  {
+#ifdef USE_USBSID
+    if (!usbsid_isopen())
+    {
+      if (!usbsid_open(usbsidboards))
+        return false;
+      std::atexit(usbsid_close);
+    }
+    usbsid_settiming(cfg.ntsc, framerate);
+    usbsid_setsidcount(cfg.numsids);
+    if (!usbsid_start(sound_usbsidframe))
+      return false;
+
+    midi_init();
+    useusbsid = true;
+#else
+    return false;
+#endif
+  }
+  else if (cfg.exsid)
   {
 #ifdef USE_EXSID
     exsidfd = exSID_new();
@@ -185,6 +220,15 @@ void sound_uninit()
   // not mixing stuff anymore, and we can safely delete related structures
   SDL_Delay(50);
 
+#ifdef USE_USBSID
+  if (useusbsid)
+  {
+    // Keep boards open across sound_init() calls, close at exit
+    usbsid_stop();
+    useusbsid = false;
+  }
+  else
+#endif
 #ifdef USE_EXSID
   if (useexsid)
   {
@@ -261,6 +305,40 @@ void sound_playrout()
   }
 #endif
 }
+
+#ifdef USE_USBSID
+// Run the player and send one frame, called by the USBSID-Pico frame thread
+void sound_usbsidframe()
+{
+  playroutine();
+
+  // Write in reSIDfp path order and spacing
+  unsigned cycle = 0;
+  if (config.numsids == 1)
+  {
+    for (int c = 0; c < NUMSIDREGS; c++)
+    {
+      unsigned o = sid_getorder(c);
+      usbsid_write(0, o, sidreg[o], cycle);
+      cycle += SIDWRITEDELAY;
+    }
+  }
+  else
+  {
+    for (int c = 0; c < NUMSIDREGS; c++)
+    {
+      unsigned o = sid_getorder(c);
+
+      // Extra delay for loading the waveform (and mt_chngate,x)
+      if ((o == 4) || (o == 11) || (o == 18))
+        cycle += SIDWAVEDELAY;
+      usbsid_write(0, o, sidreg[o], cycle);
+      usbsid_write(1, o, sidreg2[o], cycle);
+      cycle += SIDWRITEDELAY - 5;
+    }
+  }
+}
+#endif
 
 void sound_mixer(Sint32 *dest, unsigned samples)
 {

@@ -38,6 +38,7 @@
 
 char specialnotenames[186];
 char scalatuningfilepath[MAX_PATHNAME];
+char usbsidboards[MAX_PATHNAME];
 
 void getparam(FILE *handle, unsigned *value);
 void getfloatparam(FILE *handle, float *value);
@@ -79,6 +80,7 @@ void loadconfig()
 
   specialnotenames[0] = 0;
   scalatuningfilepath[0] = 0;
+  usbsidboards[0] = 0;
   FILE *configfile = std::fopen(filename, "rt");
   if (configfile)
   {
@@ -122,6 +124,8 @@ void loadconfig()
         getparam(configfile, &ypos);
         getparam(configfile, &xsize);
         getparam(configfile, &ysize);
+        getparam(configfile, &config.usbsid);
+        getstringparam(configfile, usbsidboards);
     }
     std::fclose(configfile);
   }
@@ -179,7 +183,9 @@ void saveconfig()
                  ";Window X position\n%d\n\n"
                  ";Window Y position\n%d\n\n"
                  ";Window X size\n%d\n\n"
-                 ";Window Y size\n%d\n\n",
+                 ";Window Y size\n%d\n\n"
+                 ";Use USBSID-Pico (0 = off, 1 = on)\n%d\n\n"
+                 ";USBSID-Pico board serials, comma separated (empty = all boards)\n\"%s\"\n\n",
         CFG_VERSION,
         config.mixrate,
         config.sidmodel,
@@ -216,7 +222,9 @@ void saveconfig()
         xpos,
         ypos,
         xsize,
-        ysize);
+        ysize,
+        config.usbsid,
+        usbsidboards);
     std::fclose(configfile);
   }
 }

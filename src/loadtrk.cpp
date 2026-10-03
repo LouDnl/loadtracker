@@ -94,6 +94,8 @@ const char* usage[] = {
     "-bxx Set filter curve (0.0 (dark) to 1.0 (bright))",
     "-cxx Set combined waveforms strength (0 weak, 1 average, 2 strong) DEFAULT=average"
     "-xxx Use exdSID (0 = off, 1 = on)",
+    "-uxx Use USBSID-Pico (0 = off, 1 = on)",
+    "-sxx USBSID-Pico board serials, comma separated (DEFAULT = all boards)",
     "-N   Use NTSC timing",
     "-P   Use PAL timing (DEFAULT)",
     "-W   Write sound output to a file SIDAUDIO.RAW",
@@ -271,6 +273,14 @@ void parseargs(int argc, char **argv)
 
         case 'x':
         std::sscanf(&argv[c][2], "%u", &config.exsid);
+        break;
+
+        case 'u':
+        std::sscanf(&argv[c][2], "%u", &config.usbsid);
+        break;
+
+        case 's':
+        std::sscanf(&argv[c][2], "%255s", usbsidboards);
         break;
       }
     }

@@ -21,6 +21,7 @@
 
 extern char specialnotenames[];
 extern char scalatuningfilepath[];
+extern char usbsidboards[];
 
 void loadconfig();
 void saveconfig();
