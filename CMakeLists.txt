@@ -203,6 +203,27 @@ if (EXSID_FOUND)
     target_link_libraries(loadtrk PkgConfig::EXSID)
 endif()
 
+# USBSID-Pico support, driver in the src/driver/usbsid submodule
+option(USBSID "USBSID-Pico hardware support" ON)
+if (USBSID)
+    set(USBSID_DRIVER_DIR ${CMAKE_SOURCE_DIR}/src/driver/usbsid/src)
+    pkg_check_modules(LIBUSB IMPORTED_TARGET libusb-1.0)
+    if (NOT EXISTS ${USBSID_DRIVER_DIR}/USBSID_Manager.cpp)
+        message(STATUS "USBSID-Pico support disabled: driver missing, run git submodule update --init")
+    elseif (NOT LIBUSB_FOUND)
+        message(STATUS "USBSID-Pico support disabled: libusb-1.0 not found")
+    else()
+        message(STATUS "USBSID-Pico support enabled")
+        find_package(Threads REQUIRED)
+        target_sources(loadtrk PRIVATE
+            src/gusbsid.cpp
+            ${USBSID_DRIVER_DIR}/USBSID.cpp
+            ${USBSID_DRIVER_DIR}/USBSID_Manager.cpp)
+        target_compile_definitions(loadtrk PUBLIC USE_USBSID)
+        target_link_libraries(loadtrk PkgConfig::LIBUSB Threads::Threads)
+    endif()
+endif()
+
 
 pkg_check_modules(RESIDFP REQUIRED IMPORTED_TARGET libresidfp>=0.1)
 if(BUILD_STATIC)

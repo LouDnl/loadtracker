@@ -28,9 +28,11 @@ jobs:
           cmake:p
           sdl3:p
           libresidfp:p
+          libusb:p
     - uses: actions/checkout@v7
       with:
         ref: ${{ github.ref }}
+        submodules: true
     - name: Get the tag name
       id: get_tag_name
       run: echo "tagname=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT

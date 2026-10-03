@@ -33,7 +33,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install build-essential g++ cmake ninja-build libsdl3-dev
+          sudo apt-get install build-essential g++ cmake ninja-build libsdl3-dev libusb-1.0-0-dev pkg-config
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         env:
@@ -41,7 +41,7 @@ jobs:
           HOMEBREW_NO_INSTALL_CLEANUP: 1
         run: |
           brew update
-          brew install sdl3
+          brew install sdl3 libusb pkgconf
       - name: Install libresidfp
         env:
           GH_TOKEN: ${{ github.token }}
@@ -55,6 +55,8 @@ jobs:
           ./configure --disable-dependency-tracking
           make && sudo make install
       - uses: actions/checkout@v7
+        with:
+          submodules: true
       - name: Build
         run: |
           mkdir build
@@ -81,7 +83,10 @@ jobs:
           cmake:p
           sdl3:p
           libresidfp:p
+          libusb:p
     - uses: actions/checkout@v7
+      with:
+        submodules: true
     - name: build
       run: |
         mkdir build
