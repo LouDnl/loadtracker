@@ -13,6 +13,7 @@ A fork of [goattracker2](https://sourceforge.net/projects/goattracker2/) with th
 * dots display extended to tables and enabled by default (inspired by [SpiderJ's fork](https://github.com/jansalleine/gt2fork))
 * default to a C64 color theme, with an option to run with original colorscheme (inspired by [SpiderJ's fork](https://github.com/jansalleine/gt2fork))
 * support for [reSIDfp](https://github.com/libsidplayfp/libresidfp) and [exSID](https://github.com/libsidplayfp/exsid-driver)
+* support for [USBSID-Pico](https://github.com/LouDnl/USBSID-Pico) (`-u1`), driver in the `src/driver/usbsid` submodule
 * JACK audio output (from [leafo's fork](https://github.com/leafo/goattracker2))
 * MIDI input (based on leafo's fork with added cross-platform support using [RtMidi](https://www.music.mcgill.ca/~gary/rtmidi/))
 * XDG compliant

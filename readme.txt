@@ -231,6 +231,8 @@ model 8580 and to load "dojo.sng" on startup.
 -cxx Set combined waveforms strength (0 weak, 1 average, 2 strong) DEFAULT=average
 -wxx Set window scale factor (1 = no scaling, 2 to 4 = 2 to 4 times bigger window) DEFAULT=1
 -xxx Use exdSID (0 = off, 1 = on)
+-uxx Use USBSID-Pico (0 = off, 1 = on)
+-sxx USBSID-Pico board serials, comma separated (DEFAULT = all boards)
 -N   Use NTSC timing
 -P   Use PAL timing (DEFAULT)
 -W   Write emulated sound output to a file SIDAUDIO.RAW
@@ -276,6 +278,14 @@ and command column for zero instrument (no change) or zero command (no command.)
 --------------------
 
 exSID support is available with the -x option (-x1 to turn on).
+
+USBSID-Pico support is available with the -u option (-u1 to turn on). Writes
+are cycle exact and paced on the wall clock, with 30 ms latency. Without -s
+every attached board is opened, in USB bus and port order. -s selects boards
+by serial number, e.g. -sSERIAL1,SERIAL2. SID 1 of the song plays on the
+first SID of the first board, SID 2 on the following SID, on the same board
+or the following one. On Windows the board's "USBSID-Pico Data" interface
+needs the WinUSB driver (Zadig).
 
 HardSID support is available with the /H option (use first HardSID = -H1,
 second = -H2 etc., return to emulated output = -H0). You must have the HardSID
