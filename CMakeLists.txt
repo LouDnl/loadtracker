@@ -220,7 +220,11 @@ if (USBSID)
             ${USBSID_DRIVER_DIR}/USBSID.cpp
             ${USBSID_DRIVER_DIR}/USBSID_Manager.cpp)
         target_compile_definitions(loadtrk PUBLIC USE_USBSID)
-        target_link_libraries(loadtrk PkgConfig::LIBUSB Threads::Threads)
+        if(BUILD_STATIC)
+            target_link_libraries(loadtrk PkgConfig::LIBUSB-static Threads::Threads)
+        else()
+            target_link_libraries(loadtrk PkgConfig::LIBUSB Threads::Threads)
+        endif()
     endif()
 endif()
 

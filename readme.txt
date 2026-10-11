@@ -287,6 +287,13 @@ first SID of the first board, SID 2 on the following SID, on the same board
 or the following one. On Windows the board's "USBSID-Pico Data" interface
 needs the WinUSB driver (Zadig).
 
+When a board is unplugged or stops accepting writes, playback stops and the
+output switches to reSIDfp. Once every lost board is attached again the boards
+are reopened with the same SID order and the output switches back. ALT+U lists
+the attached boards and reopens the boards selected with -s (every board
+without -s), e.g. after a board was replaced or connected after startup. If
+none opens, reSIDfp plays until the boards are attached.
+
 HardSID support is available with the /H option (use first HardSID = -H1,
 second = -H2 etc., return to emulated output = -H0). You must have the HardSID
 drivers installed to use this feature.
@@ -352,6 +359,7 @@ SHIFT+F7  Edit hardrestart ADSR parameter
 SHIFT+F8  Switch between 6581 and 8580 SID models
 SHIFT+F10 Merge-load song
 SHIFT+,.  Move song startposition on all channels and restart last playmode
+ALT+U     List the USBSID-Pico boards and reconnect (USBSID-Pico output only)
 TAB       Cycle between editing modes (forwards)
 SHIFT+TAB Cycle between editing modes (backwards)
 INS       Insert row (Press INS/DEL on endmark to change pattern/song length)
