@@ -48,6 +48,10 @@
 #include "sdl_sound.h"
 #include "sdl_io.h"
 
+#ifdef USE_USBSID
+#  include "gusbsid.h"
+#endif
+
 #include <bitset>
 
 #include <cctype>
@@ -61,6 +65,13 @@
 constexpr int HOLDDELAY = 24;
 
 bool writer = false;
+
+#ifdef USE_USBSID
+#define USBSID_MESSAGE_MS 5000
+
+char usbsidmessage[41];             // Fits the tooltip line
+Uint64 usbsidmessageuntil = 0;
+#endif
 
 unsigned char hexkeytbl[16] =
 {
@@ -125,6 +136,11 @@ void optimizeeverything();
 void findduplicatepatterns();
 void tooltips();
 void waitkeymouse();
+#ifdef USE_USBSID
+void usbsidpoll();
+void usbsiddialog();
+void setusbsidmessage(const char *msg);
+#endif
 
 bool printhelp(bool online)
 {
@@ -403,6 +419,9 @@ void waitkey()
 {
   for (;;)
   {
+#ifdef USE_USBSID
+    usbsidpoll();
+#endif
     displayupdate();
     tooltips();
     getkey();
@@ -417,6 +436,9 @@ void waitkeymouse()
 {
   for (;;)
   {
+#ifdef USE_USBSID
+    usbsidpoll();
+#endif
     displayupdate();
     tooltips();
     getkey();
@@ -509,6 +531,12 @@ void docommand()
 void tooltips()
 {
   settooltip("");
+
+#ifdef USE_USBSID
+  // USBSID-Pico state message, a hovered tooltip replaces it
+  if (SDL_GetTicks() < usbsidmessageuntil)
+    settooltip(usbsidmessage);
+#endif
 
   // Titlebar
   if (!menu)
@@ -1270,6 +1298,15 @@ void generalcommands()
       switchMode();
     }
     break;
+
+#ifdef USE_USBSID
+    case KEY_U:
+    if (input.altpressed)
+    {
+      usbsiddialog();
+    }
+    break;
+#endif
   }
 }
 
@@ -1691,6 +1728,126 @@ void switchMode(unsigned sids)
         printmainscreen();
     }
 }
+
+#ifdef USE_USBSID
+// Switch the output on a lost or returning USBSID-Pico board
+void usbsidpoll()
+{
+  switch (sound_usbsidpoll())
+  {
+    case USBSID_EVENT_LOST:
+    stopsong();
+    sound_init(writer, config);
+    setusbsidmessage("USBSID-Pico lost, using reSIDfp");
+    break;
+
+    case USBSID_EVENT_RECONNECTED:
+    stopsong();
+    sound_init(writer, config);
+    setusbsidmessage("USBSID-Pico reconnected");
+    break;
+  }
+}
+
+// Show a USBSID-Pico state message in the tooltip line for a few seconds
+void setusbsidmessage(const char *msg)
+{
+  std::snprintf(usbsidmessage, sizeof usbsidmessage, "%s", msg);
+  usbsidmessageuntil = SDL_GetTicks() + USBSID_MESSAGE_MS;
+}
+
+// List the attached USBSID-Pico boards, reopen the boards on confirm
+void usbsiddialog()
+{
+  if (!config.usbsid)
+  {
+    printtextcp(dpos.statusBottomX+29, dpos.statusBottomY, colors.cmessage(), "USBSID-Pico output is off, start with -u1");
+    waitkey();
+    printblank(dpos.statusBottomX, dpos.statusBottomY, 58);
+    input.clearkeys();
+    return;
+  }
+
+  stopsong();
+
+  char attached[MAX_PATHNAME];
+  char inuse[MAX_PATHNAME];
+  const int count = usbsid_attached(attached, sizeof attached);
+  usbsid_openserials(inuse, sizeof inuse);
+
+  // Board lines, one per attached board
+  const int maxlines = 8;
+  char lines[maxlines][48];
+  int numlines = 0;
+  const char *p = attached;
+  while (*p && numlines < maxlines)
+  {
+    const char *end = std::strchr(p, ',');
+    const int len = end ? (int)(end - p) : (int)std::strlen(p);
+    char serial[33];
+    std::snprintf(serial, sizeof serial, "%.*s", len, p);
+
+    // Mark the boards in use
+    bool used = false;
+    const char *q = inuse;
+    while (*q)
+    {
+      const char *qend = std::strchr(q, ',');
+      const int qlen = qend ? (int)(qend - q) : (int)std::strlen(q);
+      if ((qlen == len) && !std::strncmp(q, p, len)) used = true;
+      if (!qend) break;
+      q = qend + 1;
+    }
+    std::snprintf(lines[numlines], sizeof lines[numlines], "%d %-32s %s", numlines + 1, serial, used ? "IN USE" : "");
+    numlines++;
+    if (!end) break;
+    p = end + 1;
+  }
+
+  const int boxw = 50;
+  const int boxh = (numlines ? numlines : 1) + 6;
+  const int boxx = MAX_COLUMNS/2 - boxw/2;
+  const int boxy = MAX_ROWS/2 - boxh/2;
+
+  for (int c = 0; c < boxh; c++)
+    printblank(boxx, boxy + c, boxw);
+  drawbox(boxx, boxy, 15, boxw, boxh);
+  printblankc(boxx+1, boxy+1, colors.cheader(), boxw-2);
+  printtext(boxx+1, boxy+1, colors.cheader(), "USBSID-PICO BOARDS");
+
+  if (!numlines)
+    printtext(boxx+2, boxy+3, colors.cnormal(), "No board attached");
+  for (int c = 0; c < numlines; c++)
+    printtext(boxx+2, boxy+3+c, colors.cnormal(), lines[c]);
+  if (count > numlines)
+  {
+    std::snprintf(textbuffer, MAX_PATHNAME, "and %d more", count - numlines);
+    printtext(boxx+2, boxy+3+numlines, colors.cnormal(), textbuffer);
+  }
+
+  const char *status = sound_usbsidlost() ? "Lost, playing on reSIDfp" :
+    (inuse[0] ? "Connected" : "Not connected");
+  std::snprintf(textbuffer, MAX_PATHNAME, "Output: %s", status);
+  printtext(boxx+2, boxy+boxh-3, colors.cnormal(), textbuffer);
+  printtext(boxx+2, boxy+boxh-2, colors.cmessage(), "Reconnect (y/n)?");
+
+  // Keep the box on screen, waitkey() redraws the main screen
+  waitkeynoupdate();
+  const bool yes = input.iskeyyes();
+  input.clearkeys();
+  printmainscreen();
+
+  if (!yes) return;
+
+  if (sound_usbsidreconnect(writer, config))
+  {
+    std::snprintf(textbuffer, MAX_PATHNAME, "USBSID-Pico: %d SID(s) connected", usbsid_totalsids());
+    setusbsidmessage(textbuffer);
+  }
+  else
+    setusbsidmessage("USBSID-Pico not found, using reSIDfp");
+}
+#endif
 
 void switchMode()
 {

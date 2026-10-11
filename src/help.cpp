@@ -67,6 +67,9 @@ void onlinehelp(bool standalone, bool context)
     "SHIFT+F10 Merge-load song",
     "SHIFT+, . Move song startpos & restart",
     "ALT+M Switch mono / stereo mode",
+#ifdef USE_USBSID
+    "ALT+U USBSID-Pico boards & reconnect",
+#endif
     "TAB Cycle between editing modes",
     "INS Insert row (Press on endmark to",
     "DEL Delete row change patt. length)",

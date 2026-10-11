@@ -11,8 +11,8 @@ This manual page documents briefly the
 command.
 .PP
 \fBloadtracker\fP is a C64 music tracker derived from goattracker.
-It supports emulated output via the software reSIDfp engine or the exSID
-soundcard, and produces songs in its gt2 format (*.SNG).
+It supports emulated output via the software reSIDfp engine, the exSID
+soundcard or USBSID-Pico boards, and produces songs in its gt2 format (*.SNG).
 The program can also export tunes in SID format, BIN format,
 or Commodore PRG format for inclusion on a floppy you can stick into
 a 1541/1571/1581 drive.
@@ -88,6 +88,12 @@ Set combined waveforms strength (0 weak, 1 average, 2 strong) DEFAULT=average
 \fB-x\fIxx\fR
 Use exdSID (0 = off, 1 = on)
 .TP
+\fB-u\fIxx\fR
+Use USBSID-Pico (0 = off, 1 = on)
+.TP
+\fB-s\fIxx\fR
+USBSID-Pico board serials, comma separated (DEFAULT = all boards)
+.TP
 \fB-N\fR
 Use NTSC timing
 .TP
@@ -105,6 +111,12 @@ Standalone online help window
 .TP
 \fB--dark\fR
 Use original dark colorscheme
+.SH USBSID-PICO
+A board that is unplugged or stops accepting writes stops playback and switches
+the output to reSIDfp. The output switches back once every lost board is
+attached again.
+\fBALT+U\fR lists the attached boards and reopens the boards from \fB-s\fR
+(every board without \fB-s\fR).
 .SH SEE ALSO
 .BR ocp (1),
 .BR protracker (1),

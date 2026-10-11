@@ -74,8 +74,15 @@ unsigned exsidDelay = 0;
 #define SIDWAVEDELAY 4 // and $xxxx,x 4 cycles extra
 
 bool useusbsid = false;
+bool usbsidlost = false;          // reSIDfp plays until the lost boards are back
+bool usbsidexitset = false;       // usbsid_close() registered with atexit()
+char usbsidwait[MAX_PATHNAME];    // Serials of the lost boards
+Uint64 usbsidnextpoll = 0;
+
+#define USBSID_POLL_MS 1000
 
 void sound_usbsidframe();
+bool sound_usbsidopen(const char *serials);
 #endif
 
 #if defined(USE_EXSID) || defined(USE_USBSID)
@@ -113,14 +120,17 @@ bool sound_init(bool writer, const Settings &cfg)
     snd_bpmtempo /= 2;
   }
 
+#ifdef USE_USBSID
+  if (cfg.usbsid && !usbsidlost)
+#else
   if (cfg.usbsid)
+#endif
   {
 #ifdef USE_USBSID
     if (!usbsid_isopen())
     {
-      if (!usbsid_open(usbsidboards))
+      if (!sound_usbsidopen(usbsidboards))
         return false;
-      std::atexit(usbsid_close);
     }
     usbsid_settiming(cfg.ntsc, framerate);
     usbsid_setsidcount(cfg.numsids);
@@ -307,6 +317,69 @@ void sound_playrout()
 }
 
 #ifdef USE_USBSID
+// Open boards, close them at exit
+bool sound_usbsidopen(const char *serials)
+{
+  if (!usbsid_open(serials))
+    return false;
+  if (!usbsidexitset)
+  {
+    std::atexit(usbsid_close);
+    usbsidexitset = true;
+  }
+  return true;
+}
+
+int sound_usbsidpoll()
+{
+  if (!usbsidlost)
+  {
+    if (!useusbsid || !usbsid_lost())
+      return USBSID_EVENT_NONE;
+
+    // Wait for the same boards, the song SIDs keep their places
+    usbsid_openserials(usbsidwait, sizeof usbsidwait);
+    usbsid_close();
+    usbsidlost = true;
+    usbsidnextpoll = SDL_GetTicks() + USBSID_POLL_MS;
+    std::fprintf(stderr, "USBSID-Pico: board lost, playing on reSIDfp\n");
+    return USBSID_EVENT_LOST;
+  }
+
+  const Uint64 now = SDL_GetTicks();
+  if (now < usbsidnextpoll)
+    return USBSID_EVENT_NONE;
+  usbsidnextpoll = now + USBSID_POLL_MS;
+
+  if (!usbsid_allattached(usbsidwait) || !sound_usbsidopen(usbsidwait))
+    return USBSID_EVENT_NONE;
+
+  usbsidlost = false;
+  std::fprintf(stderr, "USBSID-Pico: boards reconnected\n");
+  return USBSID_EVENT_RECONNECTED;
+}
+
+bool sound_usbsidreconnect(bool writer, const Settings &cfg)
+{
+  usbsid_close();
+  usbsidlost = false;
+  if (sound_init(writer, cfg))
+    return true;
+
+  // Board missing or not starting: play on reSIDfp, wait for the boards from the settings
+  usbsid_close();
+  std::snprintf(usbsidwait, sizeof usbsidwait, "%s", usbsidboards);
+  usbsidlost = true;
+  usbsidnextpoll = SDL_GetTicks() + USBSID_POLL_MS;
+  sound_init(writer, cfg);
+  return false;
+}
+
+bool sound_usbsidlost()
+{
+  return usbsidlost;
+}
+
 // Run the player and send one frame, called by the USBSID-Pico frame thread
 void sound_usbsidframe()
 {

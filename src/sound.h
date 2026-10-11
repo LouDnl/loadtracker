@@ -26,4 +26,34 @@ struct Settings;
 bool sound_init(bool writer, const Settings &cfg);
 void sound_uninit();
 
+// USBSID-Pico board events reported by sound_usbsidpoll()
+enum UsbsidEvent
+{
+  USBSID_EVENT_NONE,
+  USBSID_EVENT_LOST,
+  USBSID_EVENT_RECONNECTED
+};
+
+/**
+ * @brief: Check the USBSID-Pico boards, call from the main thread.
+ *         Close lost boards, reopen them once every one is attached again.
+ *         Call sound_init() on an event to switch the output.
+ * @return: UsbsidEvent
+ */
+int sound_usbsidpoll();
+
+/**
+ * @brief: Close and reopen the USBSID-Pico boards from the settings.
+ *         Play on reSIDfp and wait for the boards if none opens.
+ * @param writer: write sound output to a file
+ * @param cfg: settings
+ * @return: true if USBSID-Pico plays
+ */
+bool sound_usbsidreconnect(bool writer, const Settings &cfg);
+
+/**
+ * @brief: Return true while reSIDfp plays in place of lost USBSID-Pico boards.
+ */
+bool sound_usbsidlost();
+
 #endif

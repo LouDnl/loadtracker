@@ -1,3 +1,21 @@
+/*
+ * LoadTracker
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 //
 // USBSID-Pico output
 //
@@ -74,6 +92,34 @@ void usbsid_write(unsigned sid, unsigned char reg, unsigned char value, unsigned
  * @brief: Restart the write timeline at the following frame, keep queued writes.
  */
 void usbsid_resync(void);
+
+/**
+ * @brief: Return 1 if an open board is unplugged or no longer accepts writes.
+ *         Close and open again to recover.
+ */
+int usbsid_lost(void);
+
+/**
+ * @brief: Write the serials of the open boards, comma separated, in SID order.
+ * @param buffer: output, empty string when no board is open
+ * @param size: buffer size in bytes
+ * @return: number of open boards
+ */
+int usbsid_openserials(char *buffer, int size);
+
+/**
+ * @brief: List the attached boards without opening them.
+ * @param buffer: output, comma separated serials in USB bus and port order, may be NULL
+ * @param size: buffer size in bytes
+ * @return: number of attached boards
+ */
+int usbsid_attached(char *buffer, int size);
+
+/**
+ * @brief: Return 1 if every board in serials is attached, without opening any.
+ * @param serials: comma separated board serials, NULL or empty means any board
+ */
+int usbsid_allattached(const char *serials);
 
 #ifdef __cplusplus
 }

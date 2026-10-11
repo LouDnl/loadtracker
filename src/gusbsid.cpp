@@ -1,3 +1,21 @@
+/*
+ * LoadTracker
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
 //
 // USBSID-Pico output
 //
@@ -538,6 +556,69 @@ void usbsid_resync(void)
 
   std::lock_guard<std::mutex> lock(engine->mutex);
   unsync(*engine);
+}
+
+int usbsid_lost(void)
+{
+  // Lost flags are atomic, no engine lock needed
+  return engine && engine->manager.AnyBoardLost() ? 1 : 0;
+}
+
+int usbsid_openserials(char *buffer, int size)
+{
+  std::string list;
+  int count = 0;
+
+  if (engine)
+  {
+    for (const auto &board : engine->manager.Boards())
+    {
+      if (!list.empty()) list += ',';
+      list += board.serial;
+      count++;
+    }
+  }
+  if (buffer && size > 0)
+    snprintf(buffer, (size_t)size, "%s", list.c_str());
+  return count;
+}
+
+int usbsid_attached(char *buffer, int size)
+{
+  const std::vector<USBSID_NS::USBSID_DeviceInfo> found = USBSID_Manager::Enumerate();
+  std::string list;
+
+  for (const auto &device : found)
+  {
+    if (!list.empty()) list += ',';
+    list += device.serial;
+  }
+  if (buffer && size > 0)
+    snprintf(buffer, (size_t)size, "%s", list.c_str());
+  return (int)found.size();
+}
+
+int usbsid_allattached(const char *serials)
+{
+  const std::vector<USBSID_NS::USBSID_DeviceInfo> found = USBSID_Manager::Enumerate();
+  const std::vector<std::string> wanted = splitserials(serials);
+
+  if (wanted.empty()) return found.empty() ? 0 : 1;
+
+  for (const std::string &serial : wanted)
+  {
+    bool present = false;
+    for (const auto &device : found)
+    {
+      if (device.serial == serial)
+      {
+        present = true;
+        break;
+      }
+    }
+    if (!present) return 0;
+  }
+  return 1;
 }
 
 }
