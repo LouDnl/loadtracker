@@ -470,6 +470,18 @@ int usbsid_totalsids(void)
   return engine ? (int)engine->usable.size() : 0;
 }
 
+void usbsid_togglestereo(void)
+{
+  if (!engine) return;
+
+  // Command channel write, the engine lock is held by the frame thread across frames
+  for (int i = 0; i < engine->manager.BoardCount(); i++)
+  {
+    USBSID_NS::USBSID_Class *board = engine->manager.Board(i);
+    if (board) board->USBSID_ToggleStereo();
+  }
+}
+
 void usbsid_settiming(unsigned ntsc, unsigned framerate)
 {
   if (!engine) return;

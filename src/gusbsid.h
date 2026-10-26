@@ -54,6 +54,13 @@ int usbsid_isopen(void);
 int usbsid_totalsids(void);
 
 /**
+ * @brief: Toggle mono / stereo on every open board (v1.3 PCB only, other boards ignore it).
+ *         Uses the board command channel, no engine lock, callable from the UI thread.
+ *         Does not reboot the board.
+ */
+void usbsid_togglestereo(void);
+
+/**
  * @brief: Set the board clock and the frame rate, not callable from framefunc.
  * @param ntsc: 0 = PAL clock, 1 = NTSC clock
  * @param framerate: player calls per second

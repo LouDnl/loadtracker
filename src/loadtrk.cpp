@@ -1005,6 +1005,9 @@ void mousecommands()
       if ((input.mousex >= dpos.statusTopFvX-3) && (input.mousex <= dpos.statusTopFvX-2) && (config.numsids == 2))
       {
         config.monomode = !config.monomode;
+#ifdef USE_USBSID
+        if (usbsid_isopen()) usbsid_togglestereo();
+#endif
       }
       if ((input.mousex >= dpos.statusTopFvX) && (input.mousex <= dpos.statusTopFvX+1))
       {
@@ -1281,6 +1284,9 @@ void generalcommands()
     else if (input.shiftpressed && (config.numsids == 2))
     {
         config.monomode = !config.monomode;
+#ifdef USE_USBSID
+        if (usbsid_isopen()) usbsid_togglestereo();
+#endif
     }
     break;
 

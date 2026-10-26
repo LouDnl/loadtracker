@@ -63,7 +63,7 @@ void onlinehelp(bool standalone, bool context)
     "SHIFT+F5-F6 Change speed multiplier",
     "SHIFT+F7 Change hardrestart ADSR",
     "SHIFT+F8 Switch between 6581/8580 SID",
-    "SHIFT+F9 Mix to mono (in STEREO mode)",
+    "SHIFT+F9 Mono mix, also USBSID-Pico (STEREO)",
     "SHIFT+F10 Merge-load song",
     "SHIFT+, . Move song startpos & restart",
     "ALT+M Switch mono / stereo mode",
